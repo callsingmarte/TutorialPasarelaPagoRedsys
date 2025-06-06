@@ -1,0 +1,25 @@
+.product-card-custom {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.col:hover .product-card-custom {
+  transform: translateY(-8px);
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2) !important; 
+}
+
+.product-button-custom {
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, transform 0.1s ease-in-out;
+}
+
+  .product-button-custom:hover {
+    transform: scale(1.02); 
+  }
+
+  .product-button-custom:active {
+    transform: scale(0.98); 
+  }
+
+.card-text {
+  line-height: 1.5;
+}

@@ -1,0 +1,48 @@
+.modal.show {
+  display: block; 
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050; 
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+
+.modal-backdrop.show {
+  opacity: 0.5;
+  z-index: 1040; 
+}
+
+
+.modal-dialog {
+  margin: 1.75rem auto; 
+}
+
+.modal-content {
+  border-radius: 1rem; 
+  border: none; 
+}
+
+.modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.modal-footer {
+  border-top: none; 
+  padding-top: 0;
+}
+
+.btn-close {
+  font-size: 1.25rem; 
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:active, .btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}

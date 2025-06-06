@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\app",
+    "\\src\\app\\components",
+    "\\src\\app\\components\\modal-compra",
+    "\\src\\app\\components\\product-list",
+    "\\src\\app\\models",
+    "\\src\\app\\services"
+  ],
+  "SelectedNode": "\\src\\app\\services\\redsys-payment.service.ts",
+  "PreviewInSolutionExplorer": false
+}

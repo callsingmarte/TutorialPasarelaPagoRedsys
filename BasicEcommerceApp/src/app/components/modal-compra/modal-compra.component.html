@@ -1,0 +1,62 @@
+<div class="modal fade" [class.show]="modalOpen" [class.d-block]="modalOpen" tabindex="-1" role="dialog" aria-labelledby="modalCompraLabel" [attr.aria-hidden]="!modalOpen">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content rounded-lg shadow-lg">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="modalCompraLabel">Confirmar Compra</h5>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="onCloseModal()"></button>
+      </div>
+      <!-- Modal para el primer paso: Detalles del Producto y Entrada de Datos (antes de generar el pedido) -->
+      <div *ngIf="!orderCreatedSuccessfully" class="modal-body p-4 text-center">
+        <div *ngIf="product">
+          <img [src]="product.mainImageUrl" alt="{{ product.name }}"
+               class="img-fluid rounded-lg mb-3"
+               style="max-height: 180px; object-fit: cover; object-position: center;"
+               onerror="this.onerror=null;this.src='https://placehold.co/300x180/cccccc/333333?text=Imagen+no+disponible';">
+          <h4 class="fw-bold text-dark mb-2">{{ product.name }}</h4>
+          <p class="text-muted mb-3">{{ product.description }}</p>
+          <p class="fs-4 fw-bolder text-primary mb-0">
+            Precio: {{ product.price | currency:'EUR':'symbol':'1.2-2' }}
+          </p>
+          <p class="text-secondary mb-4">Stock disponible: {{ product.stock }} unidades</p>
+          <p class="text-info fw-semibold">¿Estás seguro de que deseas comprar este producto?</p>
+
+          <div class="form-group mb-3">
+            <label for="quantity" class="form-label fw-semibold">Cantidad:</label>
+            <input id="quantity" type="number" name="quantity" [(ngModel)]="quantity" class="form-control text-center" min="1" [max]="product.stock" />
+            <small class="form-text text-muted">Máximo: {{ product.stock }}</small>
+          </div>
+          <div class="form-group mb-4">
+            <label for="userMail" class="form-label fw-semibold">Tu Correo Electrónico:</label>
+            <input id="userMail" type="email" name="userMail" [(ngModel)]="userMail" class="form-control text-center" placeholder="ejemplo@dominio.com" />
+          </div>
+        </div>
+        <div *ngIf="!product">
+          <p class="text-danger">No se ha seleccionado ningún producto para la compra.</p>
+        </div>
+      </div>
+
+      <!-- Modal para el segundo paso: Pedido Creado y Botón de Redirección -->
+      <div *ngIf="orderCreatedSuccessfully" class="modal-body p-4 text-center">
+        <p class="text-success fw-bold fs-5">🟢 ¡Pedido creado correctamente!</p>
+        <p class="mb-4">Por favor, confirma la compra para ser redirigido a la pasarela de pago segura.</p>
+      </div>
+
+      <div class="modal-footer border-top-0 pt-0 d-flex justify-content-around">
+        <!-- Botones para el primer paso del modal -->
+        <ng-container *ngIf="!orderCreatedSuccessfully">
+          <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4" (click)="onCloseModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-lg rounded-pill px-4 ms-2" (click)="generateRedsysData()">Confirmar Pedido</button>
+        </ng-container>
+
+        <!-- Botones para el segundo paso del modal -->
+        <ng-container *ngIf="orderCreatedSuccessfully">
+          <button type="button" class="btn btn-secondary btn-lg rounded-pill px-4" (click)="onCloseModal()">Cancelar</button>
+          <!-- Este botón ahora llama a onConfirmPurchase(), que activará la redirección programática -->
+          <button type="button" class="btn btn-success btn-lg rounded-pill px-4 ms-2" (click)="onConfirmPurchase()">Comprar Ahora</button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop fade" [class.show]="modalOpen" [class.d-block]="modalOpen" *ngIf="modalOpen"></div>
