@@ -7,7 +7,6 @@ import { PaymentStatusComponent } from './components/payment-status/payment-stat
 export const routes: Routes = [
   { path: '', component: ProductListComponent, pathMatch: 'full' },
   { path: 'product/:id', component: ProductDetailsComponent },
-  { path: 'pago-exito', component: PaymentStatusComponent },
-  { path: 'pago-error', component: PaymentStatusComponent },
+  { path: 'payment-status/:statusType', component: PaymentStatusComponent },
   { path: 'order-details/:id', component: OrderDetailsComponent },
 ];

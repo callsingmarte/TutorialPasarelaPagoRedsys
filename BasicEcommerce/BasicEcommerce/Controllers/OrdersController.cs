@@ -32,7 +32,7 @@ namespace BasicEcommerce.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(Guid id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.OrderId == id);
 
             if (order == null)
             {
@@ -41,6 +41,20 @@ namespace BasicEcommerce.Controllers
 
             return order;
         }
+
+        // GET: api/Orders/redsysOrder/5
+        [HttpGet("redsysOrder/{id}")]
+        public async Task<ActionResult<Order>> GetOrderByRedsysId(string id)
+        {
+            var order = await _context.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.RedsysOrderId == id);
+
+            if (order == null) {
+                return NotFound();
+            }
+
+            return order;
+        }
+
 
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

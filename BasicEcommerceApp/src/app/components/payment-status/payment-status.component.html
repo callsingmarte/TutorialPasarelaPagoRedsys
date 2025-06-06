@@ -1,1 +1,84 @@
-<p>payment-status works!</p>
+<div class="payment-status-container">
+  <div *ngIf="isLoading" class="loading-message">
+    <p>Cargando estado del pago...</p>
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger">
+    <p><strong>Error:</strong> {{ errorMessage }}</p>
+    <p *ngIf="orderId">ID de Referencia: {{ orderId }}</p>
+    <p>Por favor, inténtalo de nuevo o contacta con nuestro soporte técnico.</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && order">
+    <div *ngIf="isSuccessStatus" class="alert alert-success">
+      <h1 class="text-center">¡Pago Realizado con Éxito! <i class="bi bi-check-circle-fill"></i></h1>
+      <p class="text-center">Tu pedido ha sido procesado correctamente.</p>
+      <hr>
+      <div class="order-details">
+        <p><strong>ID de Pedido (Interno):</strong> {{ order.orderId }}</p>
+        <p><strong>ID de Referencia Redsys:</strong> {{ order.redsysOrderId }}</p>
+        <p><strong>Estado:</strong> {{ order.status }}</p>
+        <p><strong>Email Cliente:</strong> {{ order.clientMail }}</p>
+        <p><strong>Fecha del Pedido:</strong> {{ order.orderDate | date:'medium' }}</p>
+        <p><strong>Total Pagado:</strong> {{ order.totalPrice | currency:'EUR':'symbol':'1.2-2' }}</p>
+
+        <h3 class="mt-4">Detalles del Pedido:</h3>
+        <ul class="list-group">
+          <li *ngFor="let item of order.orderItems" class="list-group-item d-flex justify-content-between align-items-center">
+            <img [src]="item.product?.mainImageUrl" alt="item.product?.name"
+                 style="object-fit:contain" width="300px" />
+            <div>
+              <strong>{{ item.product?.name || 'Producto Desconocido' }}</strong>
+              <br>
+              <small>Cantidad: {{ item.quantity }} x {{ item.product?.price | currency:'EUR':'symbol':'1.2-2' }}</small>
+            </div>
+            <span class="badge bg-primary rounded-pill">{{ item.subtotal | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </li>
+        </ul>
+      </div>
+      <p class="text-center mt-4">Recibirás una confirmación por correo electrónico en breve. ¡Gracias por tu compra!</p>
+    </div>
+
+    <div *ngIf="isErrorStatus" class="alert alert-warning">
+      <h1 class="text-center">Hubo un Problema con tu Pago <i class="bi bi-x-circle-fill"></i></h1>
+      <p class="text-center">Lo sentimos, no pudimos procesar tu pedido en este momento. Los detalles son los siguientes:</p>
+      <hr>
+      <div class="order-details">
+        <p><strong>ID de Pedido (Interno):</strong> {{ order.orderId }}</p>
+        <p><strong>ID de Referencia Redsys:</strong> {{ order.redsysOrderId }}</p>
+        <p><strong>Estado:</strong> {{ order.status }}</p>
+        <p><strong>Email Cliente:</strong> {{ order.clientMail }}</p>
+        <p><strong>Fecha del Pedido:</strong> {{ order.orderDate | date:'medium' }}</p>
+        <p><strong>Total:</strong> {{ order.totalPrice | currency:'EUR':'symbol':'1.2-2' }}</p>
+
+        <h3 class="mt-4">Detalles del Intento:</h3>
+        <ul class="list-group">
+          <li *ngFor="let item of order.orderItems" class="list-group-item d-flex justify-content-between align-items-center">
+            <img [src]="item.product?.mainImageUrl" alt="item.product?.name"
+                 style="object-fit:contain" width="300px" />
+            <div>
+              <strong>{{ item.product?.name || 'Producto Desconocido' }}</strong>
+              <br>
+              <small>Cantidad: {{ item.quantity }} x {{ item.product?.price | currency:'EUR':'symbol':'1.2-2' }}</small>
+            </div>
+            <span class="badge bg-secondary rounded-pill">{{ item.subtotal | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </li>
+        </ul>
+      </div>
+      <p class="text-center mt-4">Por favor, revisa tus datos de pago e inténtalo de nuevo. Si el problema persiste, contacta con nuestro soporte técnico.</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && !order && orderId" class="alert alert-info">
+    <p>No se encontraron detalles para el pedido con ID: {{ orderId }}</p>
+    <p>Esto puede ocurrir si el pago se completó pero la información del pedido no pudo ser recuperada.</p>
+    <p>Por favor, contacta con soporte si necesitas ayuda.</p>
+  </div>
+</div>
+
+<button class="btn btn-warning mt-3" (click)="goToHomePage()">
+  Volver a la página principal
+</button>

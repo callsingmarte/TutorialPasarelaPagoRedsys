@@ -79,13 +79,13 @@ namespace BasicEcommerce.Controllers
                 Subtotal = product.Price * purchaseRequest.Quantity
             };
 
+            string redsysOrderId = order.OrderId.ToString("N").Substring(0, 12);
+            order.RedsysOrderId = redsysOrderId;
+
             await _context.OrderItems.AddAsync(orderItem);
             await _context.SaveChangesAsync();
 
             // --- Generación de parámetros y firma usando RedsysTpv.NetStandard ---
-
-            string redsysOrderId = order.OrderId.ToString("N").Substring(0, 12);
-
             string dsMerchantMerchantUrl = _configuration["Redsys:MerchantNotificationUrl"] ?? string.Empty;
 
             // 1. Mapear tus datos a la clase PaymentRequest de la librería RedsysTPV.Models
