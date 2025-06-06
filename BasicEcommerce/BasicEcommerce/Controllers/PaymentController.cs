@@ -6,6 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+// ¡Asegúrate de que estos 'using' estén al inicio de tu archivo de controlador!
+using RedsysTPV; // Para RedsysParameters
+using RedsysTPV.Models; // Para RedsysParameters
+using RedsysTPV.Enums;
 
 namespace BasicEcommerce.Controllers
 {
@@ -16,10 +20,19 @@ namespace BasicEcommerce.Controllers
         private readonly EcommerceContext _context;
         private readonly IConfiguration _configuration;
 
+        // Declara las instancias de los managers de Redsys
+        private readonly MerchantParametersManager _merchantParametersManager;
+        private readonly SignatureManager _signatureManager;
+
         public PaymentController(EcommerceContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
+
+            // Inicializa las instancias de los managers en el constructor
+            // Por lo que vimos en el explorador de objetos, no requieren parámetros en su constructor.
+            _merchantParametersManager = new MerchantParametersManager();
+            _signatureManager = new SignatureManager();
         }
 
 
@@ -39,32 +52,25 @@ namespace BasicEcommerce.Controllers
                 return NotFound("Producto no encontrado.");
             }
 
-            // Calculamos el importe en céntimos antes de crear el pedido
             decimal totalAmountDecimal = product.Price * purchaseRequest.Quantity;
-            int totalAmountCents = (int)(totalAmountDecimal * 100); // Redsys espera el importe en céntimos
 
-            // Asegúrate de que estos valores son EXACTOS de tu configuración de Redsys (entorno de pruebas).
             string merchantCode = _configuration["Redsys:MerchantCode"] ?? throw new InvalidOperationException("Redsys:MerchantCode no configurado.");
             string terminal = _configuration["Redsys:Terminal"] ?? throw new InvalidOperationException("Redsys:Terminal no configurado.");
-            // ESTA ES LA CLAVE DE LA FIRMA. ¡DEBE SER LA CLAVE BASE64 REAL DE TU TPV VIRTUAL DE PRUEBAS!
-            // No uses "TU_CLAVE_DE_FIRMA_SECRETA". La clave de prueba común para HMAC SHA256 es como "sq7HjrUoSSC6opPkkQ9gKxgyuNEzTknz" (ejemplo Base64)
             string signatureKeyBase64 = _configuration["Redsys:SignatureKey"] ?? throw new InvalidOperationException("Redsys:SignatureKey no configurada.");
             string redsysTpvsUrl = _configuration["Redsys:TpvsUrl"] ?? throw new InvalidOperationException("Redsys:TpvsUrl no configurada.");
 
             // --- Creación del Pedido y OrderItem ---
-            // Aquí es donde se establece el OrderId que luego usaremos para Redsys
             Order order = new Order()
             {
                 ClientMail = purchaseRequest.UserMail,
                 OrderDate = DateTime.UtcNow,
-                Status = "PendingPayment", 
-                TotalPrice = totalAmountDecimal 
+                Status = "PendingPayment",
+                TotalPrice = totalAmountDecimal
             };
 
             await _context.Orders.AddAsync(order);
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
 
-            // Añadir elemento del Pedido
             OrderItem orderItem = new OrderItem()
             {
                 OrderId = order.OrderId,
@@ -76,52 +82,41 @@ namespace BasicEcommerce.Controllers
             await _context.OrderItems.AddAsync(orderItem);
             await _context.SaveChangesAsync();
 
-            // --- Parámetros de Redsys (¡Otro punto crítico a revisar!) ---
-            // El ID del pedido para Redsys debe ser una cadena alfanumérica y a menudo sin guiones.
-            // Guid.ToString("N") quita los guiones.
-            string redsysOrderId = order.OrderId.ToString("N");
-            // Algunos TPVs virtuales antiguos de Redsys requerían que el OrderId tuviera un mínimo de caracteres
-            // o un formato específico (ej. los primeros 4 dígitos deben ser numéricos).
-            // Si el problema persiste, verifica la documentación específica de tu TPV.
+            // --- Generación de parámetros y firma usando RedsysTpv.NetStandard ---
 
-            var redsysMerchantParameters = new
-            {
-                DS_MERCHANT_AMOUNT = totalAmountCents.ToString(), // Importe en céntimos (SIEMPRE como STRING)
-                DS_MERCHANT_ORDER = redsysOrderId, // ID del pedido SIN GUIONES
-                DS_MERCHANT_MERCHANTCODE = merchantCode,
-                DS_MERCHANT_CURRENCY = "978", // EUR
-                DS_MERCHANT_TRANSACTIONTYPE = "0", // 0 para autorización/venta estándar
-                DS_MERCHANT_TERMINAL = terminal,
-                // Las URLs OK/KO también se pueden enviar para que Redsys redirija allí después del pago
-                DS_MERCHANT_URLOK = $"{_configuration["Redsys:UrlOk"]}?orderId={order.OrderId}",
-                DS_MERCHANT_URLKO = $"{_configuration["Redsys:UrlKo"]}?orderId={order.OrderId}",
-                DS_MERCHANT_CONSUMERLANGUAGE = "001", // 001 para Español
-            };
+            string redsysOrderId = order.OrderId.ToString("N").Substring(0, 12);
 
-            string jsonParams = JsonSerializer.Serialize(redsysMerchantParameters);
+            string dsMerchantMerchantUrl = _configuration["Redsys:MerchantNotificationUrl"] ?? string.Empty;
 
-            string encodedParams = Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonParams));
+            // 1. Mapear tus datos a la clase PaymentRequest de la librería RedsysTPV.Models
+            var paymentRequest = new PaymentRequest(
+                merchantCode,
+                terminal,
+                TransactionType.Authorization,
+                totalAmountDecimal,
+                Currency.EUR,
+                redsysOrderId,
+                dsMerchantMerchantUrl,
+                $"{_configuration["Redsys:UrlOk"]}?orderId={order.OrderId}",
+                $"{_configuration["Redsys:UrlKo"]}?orderId={order.OrderId}",
+                Language.Spanish
+            );
 
-            // --- Generación de la Firma HMAC-SHA256 (El algoritmo parece correcto) ---
-            // La clave de firma (signatureKeyBase64) DEBE ser la cadena Base64 que te da Redsys.
-            // 'Convert.FromBase64String' la decodifica a bytes, que es lo que HMACSHA256 espera.
-            byte[] keyBytes = Convert.FromBase64String(signatureKeyBase64);
-            byte[] dataBytes = Encoding.UTF8.GetBytes(encodedParams);
+            // 2. Obtener el parámetro Ds_MerchantParameters cifrado/codificado
+            // Se llama al método de instancia GetMerchantParameters()
+            string dsMerchantParameters = _merchantParametersManager.GetMerchantParameters(paymentRequest);
 
-            byte[] hash;
-            using (var hmac = new HMACSHA256(keyBytes))
-            {
-                hash = hmac.ComputeHash(dataBytes);
-            }
-            string signature = Convert.ToBase64String(hash); // La firma final debe ser Base64 también
+            // 3. Obtener el parámetro Ds_Signature
+            string dsSignature = _signatureManager.GetSignature(dsMerchantParameters, redsysOrderId, signatureKeyBase64);
 
             // --- Devolver los datos a Angular ---
+            // Estos son los datos que tu frontend Angular necesita para construir el formulario POST
             var response = new RedsysPaymentDataDto
             {
-                Ds_SignatureVersion = "HMAC_SHA256_V1", // Confirma que tu TPV virtual usa esta versión de firma
-                Ds_MerchantParameters = encodedParams,
-                Ds_Signature = signature,
-                RedsysTpvsUrl = redsysTpvsUrl
+                Ds_SignatureVersion = "HMAC_SHA256_V1", // Versión de la firma (fija para esta integración)
+                Ds_MerchantParameters = dsMerchantParameters, // Parámetros de comercio codificados
+                Ds_Signature = dsSignature, // Firma calculada
+                RedsysTpvsUrl = redsysTpvsUrl // URL del TPV de Redsys
             };
 
             return Ok(response);
