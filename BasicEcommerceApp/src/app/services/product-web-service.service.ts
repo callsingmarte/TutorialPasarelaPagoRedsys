@@ -25,6 +25,16 @@ export class ProductWebServiceService {
       );
   }
 
+  putProductoById(id: string, product: IProduct) {
+    const url = `${this.apiUrl}/${id}`;
+
+    return this.http.put<IProduct>(url, product)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Se ha producido un error desconocido!';
     if (error.error instanceof ErrorEvent) {

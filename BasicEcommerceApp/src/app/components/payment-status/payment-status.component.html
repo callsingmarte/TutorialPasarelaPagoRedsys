@@ -29,7 +29,7 @@
         <ul class="list-group">
           <li *ngFor="let item of order.orderItems" class="list-group-item d-flex justify-content-between align-items-center">
             <img [src]="item.product?.mainImageUrl" alt="item.product?.name"
-                 style="object-fit:contain" width="300px" />
+                 style="object-fit:contain; border-radius: 5px" width="300px" />
             <div>
               <strong>{{ item.product?.name || 'Producto Desconocido' }}</strong>
               <br>
@@ -40,6 +40,10 @@
         </ul>
       </div>
       <p class="text-center mt-4">Recibirás una confirmación por correo electrónico en breve. ¡Gracias por tu compra!</p>
+      <button class="btn btn-outline-info btn-sm" (click)="downloadSingleOrderPdf(order)">
+        <i class="bi bi-download"></i>
+        <span>Decargar PDF</span>
+      </button>
     </div>
 
     <div *ngIf="isErrorStatus" class="alert alert-warning">
@@ -58,7 +62,7 @@
         <ul class="list-group">
           <li *ngFor="let item of order.orderItems" class="list-group-item d-flex justify-content-between align-items-center">
             <img [src]="item.product?.mainImageUrl" alt="item.product?.name"
-                 style="object-fit:contain" width="300px" />
+                 style="object-fit: contain; border-radius: 5px " width="300px" />
             <div>
               <strong>{{ item.product?.name || 'Producto Desconocido' }}</strong>
               <br>
@@ -69,6 +73,10 @@
         </ul>
       </div>
       <p class="text-center mt-4">Por favor, revisa tus datos de pago e inténtalo de nuevo. Si el problema persiste, contacta con nuestro soporte técnico.</p>
+      <button class="btn btn-outline-info btn-sm" (click)="downloadSingleOrderPdf(order)">
+        <i class="bi bi-download"></i>
+        <span>Decargar PDF</span>
+      </button>
     </div>
   </div>
 
@@ -78,6 +86,7 @@
     <p>Por favor, contacta con soporte si necesitas ayuda.</p>
   </div>
 </div>
+
 
 <button class="btn btn-warning mt-3" (click)="goToHomePage()">
   Volver a la página principal

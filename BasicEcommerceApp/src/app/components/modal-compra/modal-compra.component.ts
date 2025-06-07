@@ -2,7 +2,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { IProduct } from '../../models/product.model';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { PaymentProcessService } from '../../services/payment-process.service'; // Asegúrate de que esto sea correcto
 import { RedsysPaymentService } from '../../services/redsys-payment.service';
 import { FormsModule } from '@angular/forms';
 import { redsysPaymentDataDto } from '../../models/RedsysPaymentDataDto.model';
@@ -43,9 +42,7 @@ export class ModalCompraComponent implements OnInit, OnChanges {
   public orderCreatedSuccessfully: boolean = false;
 
   constructor(
-    private redsysPaymentService: RedsysPaymentService,
-    // Si PaymentProcessService no se usa directamente en este componente, puedes quitarlo
-    private paymentService: PaymentProcessService // Opcional, si no lo usas aquí
+    private redsysPaymentService: RedsysPaymentService
   ) { }
 
   ngOnInit(): void {

@@ -11,8 +11,8 @@ export class OrderService {
   private apiUrl = 'https://localhost:7153/api/Orders'
   constructor(private http: HttpClient) { }
 
-  getOrderByRedsysId(redsysOrderId : string): Observable<IOrder> {
-    return this.http.get<IOrder>(`${this.apiUrl}/redsysOrder/${redsysOrderId}`)
+  getOrderByUserMail(userMail: string): Observable<IOrder[]> {
+    return this.http.get<IOrder[]>(`${this.apiUrl}/user/${userMail}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -20,6 +20,15 @@ export class OrderService {
 
   getOrderById(orderId: string): Observable<IOrder> {
     return this.http.get<IOrder>(`${this.apiUrl}/${orderId}`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  updateOrderById(orderId: string, order: IOrder) {
+    const url = `${this.apiUrl}/${orderId}`;
+
+    return this.http.put<IOrder>(url, order)
       .pipe(
         catchError(this.handleError)
       );

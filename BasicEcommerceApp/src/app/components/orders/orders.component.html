@@ -1,0 +1,77 @@
+<div class="container my-5">
+  <h1 class="text-center mb-4">Mis Pedidos</h1>
+
+  <div *ngIf="isLoading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando pedidos...</span>
+    </div>
+    <p class="mt-2">Cargando tus pedidos...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-warning text-center">
+    <p>{{ errorMessage }}</p>
+    <p>Asegúrate de que el correo electrónico es correcto o contacta con soporte si el problema persiste.</p>
+    <button *ngIf="errorMessage && customerEmail" class="btn btn-primary mt-3" (click)="goToHomePage()">
+      Volver a la página principal
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && orders.length > 0" class="list-group">
+    <div *ngFor="let order of orders" class="card mb-3 shadow-sm rounded-3">
+      <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center"
+           [ngClass]="{'border-bottom': expandedOrderId === order.orderId}">
+
+        <div class="d-flex flex-column flex-grow-1">
+          <h5 class="mb-1 text-primary">Pedido #{{ order.redsysOrderId || order.orderId }}</h5>
+          <small class="text-muted">Fecha: {{ order.orderDate | date:'shortDate' }}</small>
+        </div>
+
+        <div class="d-flex flex-column align-items-end">
+          <span class="badge bg-success fs-6 fw-bold mb-1">{{ order.totalPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+          <span class="badge" [ngClass]="{ 'bg-success': order.status === 'Paid', 'bg-secondary': order.status !== 'Paid'}">
+            {{ order.status }}
+          </span>
+        </div>
+
+        <button class="btn btn-link ms-3" type="button"
+                (click)="toggleOrderItems(order.orderId)"
+                [attr.aria-expanded]="expandedOrderId === order.orderId ? 'true' : 'false'"
+                [attr.aria-controls]="'collapseItems-' + order.orderId">
+          <i class="bi" [ngClass]="{'bi-chevron-down': expandedOrderId !== order.orderId, 'bi-chevron-up': expandedOrderId === order.orderId}"></i>
+        </button>
+        <button class="btn btn-outline-info btn-sm" (click)="downloadSingleOrder(order)">
+          <i class="bi bi-download"></i>
+        </button>
+      </div>
+
+      <div class="collapse" [ngClass]="{'show': expandedOrderId === order.orderId}"
+           [id]="'collapseItems-' + order.orderId">
+        <div class="card-body">
+          <h6>Artículos del Pedido:</h6>
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let item of order.orderItems" class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <img [src]="item.product?.mainImageUrl || 'https://placehold.co/50x50/cccccc/333333?text=N/A'"
+                     alt="{{ item.product?.name || 'Producto' }}"
+                     class="img-thumbnail me-2"
+                     style="width: 50px; height: 50px; object-fit: cover;">
+                <strong>{{ item.product?.name || 'Producto Desconocido' }}</strong>
+                <br>
+                <small class="text-muted">{{ item.quantity }} x {{ item.product?.price | currency:'EUR':'symbol':'1.2-2' }}</small>
+                <p class="text-muted mb-0" *ngIf="item.product?.description" style="font-size: 0.85em;">{{ item.product?.description }}</p>
+              </div>
+              <span class="badge bg-info text-dark rounded-pill">{{ item.subtotal | currency:'EUR':'symbol':'1.2-2' }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && orders.length === 0 && !errorMessage" class="alert alert-info text-center my-5">
+    <p>No se encontraron pedidos para el correo electrónico proporcionado.</p>
+    <p>Si crees que esto es un error, por favor, verifica tu correo o contacta con soporte.</p>
+  </div>
+</div>
+
+<button class="btn btn-primary mt-3" (click)="goToHomePage()">Volver a la página principal</button>

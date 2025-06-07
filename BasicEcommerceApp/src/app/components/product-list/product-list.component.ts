@@ -3,12 +3,13 @@ import { ProductWebServiceService } from '../../services/product-web-service.ser
 import { IProduct } from '../../models/product.model';
 import { catchError, of } from 'rxjs';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ModalCompraComponent } from '../modal-compra/modal-compra.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, RouterModule, CurrencyPipe, ModalCompraComponent],
+  imports: [CommonModule, RouterModule, CurrencyPipe, ModalCompraComponent, FormsModule],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.css'
 })
@@ -17,7 +18,11 @@ export class ProductListComponent {
   public errorMessage: string | null = null;
   public showPurchaseModal: boolean = false;
   public selectedProduct: IProduct | null = null;
-  constructor(private productWebService: ProductWebServiceService) { }
+  public customerEmail: string = '';
+  constructor(
+    private router: Router,
+    private productWebService: ProductWebServiceService
+  ) { }
 
   ngOnInit() {
     this.loadProducts();
@@ -49,5 +54,18 @@ export class ProductListComponent {
   handleModalClose(): void {
     this.showPurchaseModal = false;
     this.selectedProduct = null;
+  }
+
+  isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  searchOrders(): void {
+    if (this.customerEmail && this.isValidEmail(this.customerEmail)) {
+      this.router.navigate(['/my-orders'], { queryParams: { email: this.customerEmail } });
+    } else {
+      console.warn('Intento de búsqueda con correo electrónico inválido o vacío.');
+    }
   }
 }

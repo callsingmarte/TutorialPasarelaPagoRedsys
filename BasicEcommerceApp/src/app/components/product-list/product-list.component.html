@@ -4,7 +4,28 @@
       Nuestros Productos Destacados
     </h1>
 
-    <!-- Mensaje de carga o error -->
+    <div class="card bg-white rounded-4 p-4 shadow-lg mb-5">
+      <h2 class="card-title text-center text-dark mb-4">¿Ya eres cliente? Busca tus pedidos por email</h2>
+      <div class="input-group input-group-lg">
+        <input type="email"
+               class="form-control"
+               placeholder="Introduce tu correo electrónico"
+               aria-label="Correo electrónico del cliente"
+               [(ngModel)]="customerEmail" (keyup.enter)="searchOrders()" required>
+        <button class="btn btn-primary"
+                type="button"
+                (click)="searchOrders()"
+                [disabled]="!customerEmail || !isValidEmail(customerEmail)">
+          <i class="bi bi-search"></i> Ver mis pedidos
+        </button>
+      </div>
+      <small *ngIf="!isValidEmail(customerEmail) && customerEmail.length > 0" class="text-danger mt-2">
+        Por favor, introduce un formato de correo electrónico válido.
+      </small>
+      <small *ngIf="!customerEmail" class="text-muted text-center mt-2">
+        Introduce el email con el que realizaste tu compra para ver tu historial.
+      </small>
+    </div>
     <div *ngIf="products.length === 0 && !errorMessage"
          class="alert alert-info px-4 py-3 rounded-3 mb-4 shadow-sm" role="alert">
       <strong class="fw-bold">Cargando productos...</strong>
@@ -17,7 +38,6 @@
       <span class="d-block d-sm-inline">{{ errorMessage }}</span>
     </div>
 
-    <!-- Cuadrícula de productos -->
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
       <div *ngFor="let product of products" class="col">
         <div class="card h-100 rounded-4 shadow-lg border-0 d-flex flex-column product-card-custom">
@@ -49,7 +69,5 @@
 </div>
 <app-modal-compra [product]="selectedProduct"
                   [modalOpen]="showPurchaseModal"
-                  (closeModal)="handleModalClose()"
-                  >
+                  (closeModal)="handleModalClose()">
 </app-modal-compra>
-

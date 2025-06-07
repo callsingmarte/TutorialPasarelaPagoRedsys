@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BasicEcommerce.Data;
 using BasicEcommerce.Models;
+using BasicEcommerce.Migrations;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace BasicEcommerce.Controllers
 {
@@ -30,29 +32,87 @@ namespace BasicEcommerce.Controllers
 
         // GET: api/Orders/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(Guid id)
+        public async Task<ActionResult<OrderDto>> GetOrder(Guid id)
         {
-            var order = await _context.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.OrderId == id);
+            var order = await _context.Orders.Include(o => o.OrderItems).ThenInclude(o => o.Product).SingleOrDefaultAsync(o => o.OrderId == id);
 
             if (order == null)
             {
                 return NotFound();
             }
 
-            return order;
+            var orderDto = new OrderDto
+            {
+                OrderId = order.OrderId,
+                RedsysOrderId = order.RedsysOrderId,
+                ClientMail = order.ClientMail,
+                TotalPrice = order.TotalPrice,
+                Status = order.Status,
+                OrderDate = order.OrderDate,
+                OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
+                {
+                    OrderItemId = oi.OrderItemId,
+                    ProductId = oi.ProductId,
+                    Quantity = oi.Quantity,
+                    Subtotal = oi.Subtotal,
+                    Product = oi.Product != null ? new ProductDto
+                    {
+                        ProductId = oi.Product.ProductId,
+                        Name = oi.Product.Name,
+                        Description = oi.Product.Description,
+                        Stock = oi.Product.Stock,
+                        Price = oi.Product.Price,
+                        MainImageUrl = oi.Product.MainImageUrl 
+                    } : null
+                }).ToList()
+            };
+
+            return orderDto;
         }
 
         // GET: api/Orders/redsysOrder/5
-        [HttpGet("redsysOrder/{id}")]
-        public async Task<ActionResult<Order>> GetOrderByRedsysId(string id)
+        [HttpGet("user/{userMail}")]
+        public async Task<ActionResult<IEnumerable<OrderDto>>> getOrdersByUserMail(string userMail)
         {
-            var order = await _context.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.RedsysOrderId == id);
+            if (string.IsNullOrWhiteSpace(userMail))
+            {
+                return BadRequest("El correo electrónico no puede estar vacío.");
+            }
 
-            if (order == null) {
+            var orders = await _context.Orders.Include(o => o.OrderItems).ThenInclude(o => o.Product)
+                .Where(o => o.ClientMail == userMail).ToListAsync();
+
+            if (!orders.Any()) {
                 return NotFound();
             }
 
-            return order;
+            var orderDtos = orders.Select(order => new OrderDto
+            {
+                OrderId = order.OrderId,
+                RedsysOrderId = order.RedsysOrderId,
+                ClientMail = order.ClientMail,
+                TotalPrice = order.TotalPrice,
+                Status = order.Status,
+                OrderDate = order.OrderDate,
+                OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
+                {
+                    OrderItemId = oi.OrderItemId,
+                    ProductId = oi.ProductId,
+                    Quantity = oi.Quantity,
+                    Subtotal = oi.Subtotal,
+                    Product = oi.Product != null ? new ProductDto
+                    {
+                        ProductId = oi.Product.ProductId,
+                        Name = oi.Product.Name,
+                        Description = oi.Product.Description, // Asegúrate de mapear la descripción
+                        Price = oi.Product.Price,
+                        Stock = oi.Product.Stock,
+                        MainImageUrl = oi.Product.MainImageUrl
+                    } : null
+                }).ToList()
+            }).ToList();
+
+            return Ok(orderDtos);
         }
 
 
